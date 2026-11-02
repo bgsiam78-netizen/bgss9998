@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>BG SIAM</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Rajdhani,sans-serif}
+#game{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:1;background:#111}
+
+/* ===== FLOAT LAUNCHER (shows first, no password yet) ===== */
+#launcher{
+  position:fixed;top:70px;right:12px;z-index:99990;
+  width:52px;height:52px;border-radius:50%;cursor:pointer;
+  background:radial-gradient(circle at 35% 30%,#ffe566,#d4af37 50%,#8a6a10);
+  border:2px solid #ffd700;
+  box-shadow:0 0 18px rgba(255,200,40,.65),0 4px 14px rgba(0,0,0,.5);
+  display:flex;align-items:center;justify-content:center;
+  font-family:Orbitron,monospace;font-size:11px;font-weight:900;color:#1a1000;
+  animation:pulseLaunch 2s ease-in-out infinite;
+  user-select:none;
+}
+@keyframes pulseLaunch{
+  0%,100%{transform:scale(1);box-shadow:0 0 18px rgba(255,200,40,.65)}
+  50%{transform:scale(1.06);box-shadow:0 0 28px rgba(255,200,40,.9)}
+}
+
+/* ===== PASSWORD MODAL (only after launcher click) ===== */
+#passModal{
+  position:fixed;inset:0;z-index:100000;display:none;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+.pass-card{
+  width:min(280px,88vw);padding:24px 20px;border-radius:16px;text-align:center;
+  background:linear-gradient(165deg,#1c160c,#0e0c08);
+  border:2px solid #d4af37;
+  box-shadow:0 0 40px rgba(212,175,55,.45);
+}
+.pass-title{font-family:Orbitron,monospace;font-size:18px;font-weight:900;color:#ffd700;letter-spacing:2px;text-shadow:0 0 12px rgba(255,200,0,.6)}
+.pass-sub{font-size:9px;color:#a89040;letter-spacing:2px;margin:6px 0 14px;font-family:Orbitron,monospace}
+.pass-inp{
+  width:100%;height:42px;border-radius:10px;border:1.5px solid #8a7020;
+  background:#120e08;color:#ffd700;text-align:center;font-size:14px;font-weight:700;
+  outline:none;margin-bottom:12px;font-family:Orbitron,monospace;letter-spacing:2px;
+}
+.pass-btn{
+  width:100%;height:42px;border:none;border-radius:10px;cursor:pointer;
+  background:linear-gradient(180deg,#ffe566,#d4af37 45%,#8a6a10);
+  color:#1a1000;font-weight:900;font-size:12px;letter-spacing:1.5px;font-family:Orbitron,monospace;
+}
+.pass-err{color:#ff6a6a;font-size:12px;margin-top:10px;display:none;font-weight:700}
+.pass-x{
+  position:absolute;top:10px;right:14px;background:none;border:none;color:#c9a027;
+  font-size:18px;cursor:pointer;font-weight:900;
+}
+.pass-card{position:relative}
+
+/* ===== MAIN CLUSTER ===== */
+#cluster{
+  position:fixed;top:36px;right:2px;z-index:99998;
+  display:none;align-items:center;justify-content:center;
+  user-select:none;touch-action:none;
+}
+
+.wing{
+  width:82px;height:170px;position:relative;pointer-events:none;z-index:2;
+  filter:drop-shadow(0 0 10px rgba(255,185,30,.7)) drop-shadow(0 6px 12px rgba(0,0,0,.55));
+}
+.wing svg{width:100%;height:100%;overflow:visible}
+.wing-l .layer{transform-origin:92% 50%}
+.wing-r .layer{transform-origin:8% 50%}
+.wing-l .l1{animation:flL1 .7s ease-in-out infinite}
+.wing-l .l2{animation:flL2 .7s ease-in-out infinite .05s}
+.wing-l .l3{animation:flL3 .7s ease-in-out infinite .1s}
+.wing-l .l4{animation:flL2 .7s ease-in-out infinite .15s}
+.wing-r .l1{animation:flR1 .7s ease-in-out infinite}
+.wing-r .l2{animation:flR2 .7s ease-in-out infinite .05s}
+.wing-r .l3{animation:flR3 .7s ease-in-out infinite .1s}
+.wing-r .l4{animation:flR2 .7s ease-in-out infinite .15s}
+@keyframes flL1{0%,100%{transform:rotate(5deg)}50%{transform:rotate(-18deg)}}
+@keyframes flL2{0%,100%{transform:rotate(9deg)}50%{transform:rotate(-24deg)}}
+@keyframes flL3{0%,100%{transform:rotate(14deg)}50%{transform:rotate(-28deg)}}
+@keyframes flR1{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(18deg)}}
+@keyframes flR2{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(24deg)}}
+@keyframes flR3{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(28deg)}}
+
+#card{
+  width:210px;position:relative;z-index:3;
+  background:
+    radial-gradient(ellipse at 50% -5%,rgba(255,200,60,.2),transparent 45%),
+    linear-gradient(175deg,#221c12 0%,#14120e 40%,#0a0908 100%);
+  border:2.5px solid #d4af37;
+  border-radius:20px;
+  box-shadow:
+    0 0 0 1px rgba(255,220,100,.22),
+    0 0 36px rgba(212,175,55,.42),
+    0 10px 28px rgba(0,0,0,.65),
+    inset 0 1px 0 rgba(255,230,150,.18);
+  overflow:hidden;
+}
+#card::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.1;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,200,50,.07) 2px,rgba(255,200,50,.07) 3px);
+}
+
+.topbar{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 8px 4px;cursor:grab;position:relative;z-index:1;
+}
+.bolt{color:#ffd700;font-size:13px;text-shadow:0 0 10px #ffd700}
+.mod-title{
+  font-family:Orbitron,monospace;font-size:13px;font-weight:900;color:#ffd700;
+  letter-spacing:2px;text-shadow:0 0 14px rgba(255,200,0,.75);
+}
+
+.statline{
+  display:flex;justify-content:space-between;padding:2px 12px 6px;
+  font-family:Orbitron,monospace;font-size:6.5px;color:#b89840;letter-spacing:.25px;
+  position:relative;z-index:1;
+}
+.statline b{color:#ffe680;font-weight:800}
+
+.lock{
+  text-align:center;font-family:Orbitron,monospace;font-size:8px;font-weight:800;
+  color:#5dffb0;letter-spacing:2px;margin:2px 0 6px;
+  text-shadow:0 0 12px rgba(80,255,160,.6);position:relative;z-index:1;
+}
+
+.hud{
+  margin:0 12px 8px;padding:11px 9px;
+  background:linear-gradient(160deg,rgba(0,32,42,.8),rgba(0,14,24,.88));
+  border:1.5px solid rgba(0,230,190,.55);
+  border-radius:14px;
+  box-shadow:inset 0 0 28px rgba(0,200,160,.12),0 0 16px rgba(0,200,160,.22);
+  display:flex;align-items:center;gap:9px;position:relative;z-index:1;
+}
+
+.ball-wrap{
+  width:58px;height:58px;position:relative;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.ring1{
+  position:absolute;inset:0;border-radius:50%;
+  border:1.5px solid rgba(0,255,210,.45);
+  animation:spin 3.5s linear infinite;
+}
+.ring1 i{
+  position:absolute;width:6px;height:6px;border-radius:50%;
+  background:#00ffc8;box-shadow:0 0 8px #00ffc8;
+}
+.ring1 i:nth-child(1){top:-3px;left:50%;margin-left:-3px}
+.ring1 i:nth-child(2){bottom:-3px;left:50%;margin-left:-3px;background:#ffd700;box-shadow:0 0 8px #ffd700}
+.ring2{
+  position:absolute;inset:7px;border-radius:50%;
+  border:1px dashed rgba(0,180,255,.4);
+  animation:spin 5s linear infinite reverse;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ball{
+  width:36px;height:36px;border-radius:50%;z-index:2;position:relative;
+  background:radial-gradient(circle at 32% 28%,#ff9a9a,#e00818 42%,#6a0008 90%);
+  border:2px solid rgba(255,180,180,.5);
+  box-shadow:0 0 18px rgba(255,30,40,.65),inset 0 -5px 10px rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;
+  font-family:Orbitron,monospace;font-size:16px;font-weight:900;color:#fff;
+  text-shadow:0 1px 3px #000;
+}
+
+.hud-r{flex:1;min-width:0}
+.badge{
+  display:inline-block;padding:5px 14px;border-radius:7px;margin-bottom:5px;
+  font-family:Orbitron,monospace;font-size:15px;font-weight:900;letter-spacing:1.5px;
+}
+.badge.SMALL{
+  background:linear-gradient(180deg,#4ec0ff,#1878b8);
+  color:#f0faff;border:1px solid rgba(140,210,255,.55);
+  box-shadow:0 0 14px rgba(40,160,255,.55),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.badge.BIG{
+  background:linear-gradient(180deg,#4aff90,#12a048);
+  color:#f0fff5;border:1px solid rgba(140,255,180,.55);
+  box-shadow:0 0 14px rgba(40,255,120,.55),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.badge.WAIT{
+  background:linear-gradient(180deg,#555,#2a2a2a);
+  color:#bbb;border:1px solid #666;font-size:11px;box-shadow:none;
+}
+
+.sync{
+  display:flex;align-items:center;gap:4px;
+  font-family:Orbitron,monospace;font-size:8px;color:#8aacbb;margin-bottom:3px;
+}
+.sync-track{flex:1;height:5px;background:rgba(0,40,50,.7);border-radius:3px;overflow:hidden;border:1px solid rgba(0,100,120,.3)}
+.sync-fill{
+  height:100%;width:98%;
+  background:linear-gradient(90deg,#00b868,#6dffb0);
+  box-shadow:0 0 8px rgba(0,255,150,.5);
+  transition:width .35s ease;
+}
+.meta{
+  font-family:Orbitron,monospace;font-size:7.5px;color:#8a9aaa;
+  display:flex;justify-content:space-between;gap:2px;
+}
+.meta b{color:#ffe680}
+
+.period{
+  text-align:center;font-family:Orbitron,monospace;font-size:8.5px;color:#c4a040;
+  padding:0 10px 8px;letter-spacing:1px;position:relative;z-index:1;
+}
+.period b{color:#ffe680;font-size:10px}
+
+.actions{display:flex;gap:8px;padding:0 12px 12px;position:relative;z-index:1}
+.btn{
+  flex:1;height:38px;border-radius:22px;cursor:pointer;
+  font-family:Orbitron,monospace;font-size:11px;font-weight:900;letter-spacing:1px;
+}
+.btn-next{
+  border:1.5px solid #f0d050;
+  background:linear-gradient(180deg,#ffe878 0%,#f0c420 40%,#c9a010 100%);
+  color:#2a1c00;
+  box-shadow:0 4px 14px rgba(212,175,55,.5),inset 0 1px 0 rgba(255,255,220,.5);
+}
+.btn-close{
+  border:1.5px solid #d4af37;
+  background:linear-gradient(180deg,#2e2a20,#14120e);
+  color:#e8d070;
+  box-shadow:0 4px 12px rgba(0,0,0,.45);
+}
+</style>
+</head>
+<body>
+<iframe id="game" src="https://dkwin9.com/#/register?invitationCode=153412260157" allow="autoplay"></iframe>
+
+<!-- 1) First only this button — NO password on load -->
+<div id="launcher" title="BG SIAM">VIP</div>
+
+<!-- 2) Password only after click -->
+<div id="passModal">
+  <div class="pass-card">
+    <button class="pass-x" type="button" id="passClose">✕</button>
+    <div class="pass-title">BG SIAM</div>
+    <div class="pass-sub">ENTER PASSWORD</div>
+    <input id="passIn" class="pass-inp" type="password" placeholder="PASSWORD" autocomplete="off">
+    <button class="pass-btn" type="button" id="unlockBtn">UNLOCK</button>
+    <div class="pass-err" id="loginErr">Wrong password</div>
+  </div>
+</div>
+
+<!-- 3) Full hack after correct password -->
+<div id="cluster">
+  <div class="wing wing-l">
+    <svg viewBox="0 0 80 170" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gA" x1="1" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fff8d0"/><stop offset="20%" stop-color="#ffd700"/>
+          <stop offset="55%" stop-color="#c9a027"/><stop offset="100%" stop-color="#5c4208"/>
+        </linearGradient>
+        <linearGradient id="gB" x1="1" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffe9a0"/><stop offset="40%" stop-color="#d4a820"/><stop offset="100%" stop-color="#4a3606"/>
+        </linearGradient>
+        <linearGradient id="gC" x1="1" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fff0b8"/><stop offset="50%" stop-color="#b8860b"/><stop offset="100%" stop-color="#3d2e08"/>
+        </linearGradient>
+      </defs>
+      <path class="layer l3" fill="url(#gA)" d="M68,78 C58,28 28,6 2,2 C14,30 22,55 30,78 C38,68 54,68 68,78Z"/>
+      <path class="layer l2" fill="url(#gB)" d="M68,82 C55,40 24,20 1,18 C12,42 20,62 30,82 C40,72 55,72 68,82Z"/>
+      <path class="layer l1" fill="url(#gA)" d="M68,86 C54,52 22,36 1,38 C12,58 20,72 30,88 C42,78 56,78 68,86Z"/>
+      <path class="layer l4" fill="url(#gC)" d="M68,90 C52,62 22,55 1,58 C11,72 18,84 30,94 C44,84 56,82 68,90Z"/>
+      <path class="layer l2" fill="url(#gB)" opacity=".9" d="M68,94 C50,72 20,70 2,76 C10,86 16,94 30,100 C44,90 56,88 68,94Z"/>
+      <ellipse cx="68" cy="88" rx="6" ry="18" fill="#8a6a14"/>
+      <ellipse cx="68" cy="88" rx="3" ry="12" fill="#c9a027"/>
+    </svg>
+  </div>
+
+  <div id="card">
+    <div class="topbar" id="dragHandle">
+      <span class="bolt">⚡</span>
+      <span class="mod-title">BG SIAM ‖ M</span>
+      <span class="bolt">⚡</span>
+    </div>
+    <div class="statline">
+      <span>SYS: <b id="sysVal">LOCKED</b></span>
+      <span>VIP: <b>BGSIAM</b></span>
+      <span>PING: <b id="pingVal">16MS</b></span>
+    </div>
+    <div class="lock" id="lockTxt">▣ SIGNAL LOCKED</div>
+
+    <div class="hud">
+      <div class="ball-wrap">
+        <div class="ring1"><i></i><i></i></div>
+        <div class="ring2"></div>
+        <div class="ball" id="ballNum">—</div>
+      </div>
+      <div class="hud-r">
+        <div class="badge WAIT" id="sigBadge">WAIT</div>
+        <div class="sync">
+          <span>SYNC</span>
+          <div class="sync-track"><div class="sync-fill" id="syncFill"></div></div>
+          <span id="syncPct">98%</span>
+        </div>
+        <div class="meta">
+          <span>MODE <b id="modeSide">—</b></span>
+          <span>CORE</span>
+          <span><b id="timerVal">30</b>s</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="period">PERIOD: <b id="periodVal">—</b></div>
+
+    <div class="actions">
+      <button class="btn btn-next" type="button" id="nextBtn">NEXT</button>
+      <button class="btn btn-close" type="button" id="closeBtn">✕ CLOSE</button>
+    </div>
+  </div>
+
+  <div class="wing wing-r">
+    <svg viewBox="0 0 80 170" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gRA" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fff8d0"/><stop offset="20%" stop-color="#ffd700"/>
+          <stop offset="55%" stop-color="#c9a027"/><stop offset="100%" stop-color="#5c4208"/>
+        </linearGradient>
+        <linearGradient id="gRB" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ffe9a0"/><stop offset="40%" stop-color="#d4a820"/><stop offset="100%" stop-color="#4a3606"/>
+        </linearGradient>
+        <linearGradient id="gRC" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fff0b8"/><stop offset="50%" stop-color="#b8860b"/><stop offset="100%" stop-color="#3d2e08"/>
+        </linearGradient>
+      </defs>
+      <path class="layer l3" fill="url(#gRA)" d="M12,78 C22,28 52,6 78,2 C66,30 58,55 50,78 C42,68 26,68 12,78Z"/>
+      <path class="layer l2" fill="url(#gRB)" d="M12,82 C25,40 56,20 79,18 C68,42 60,62 50,82 C40,72 25,72 12,82Z"/>
+      <path class="layer l1" fill="url(#gRA)" d="M12,86 C26,52 58,36 79,38 C68,58 60,72 50,88 C38,78 24,78 12,86Z"/>
+      <path class="layer l4" fill="url(#gRC)" d="M12,90 C28,62 58,55 79,58 C69,72 62,84 50,94 C36,84 24,82 12,90Z"/>
+      <path class="layer l2" fill="url(#gRB)" opacity=".9" d="M12,94 C30,72 60,70 78,76 C70,86 64,94 50,100 C36,90 24,88 12,94Z"/>
+      <ellipse cx="12" cy="88" rx="6" ry="18" fill="#8a6a14"/>
+      <ellipse cx="12" cy="88" rx="3" ry="12" fill="#c9a027"/>
+    </svg>
+  </div>
+</div>
+
+<script>
+(function () {
+  var PASS = 'bgh';
+  var launcher = document.getElementById('launcher');
+  var passModal = document.getElementById('passModal');
+  var cluster = document.getElementById('cluster');
+  var passIn = document.getElementById('passIn');
+  var loginErr = document.getElementById('loginErr');
+  var unlocked = false;
+  var engineOn = false;
+
+  /* Step 1: open page → only VIP button */
+  launcher.onclick = function () {
+    if (unlocked) {
+      cluster.style.display = 'flex';
+      launcher.style.display = 'none';
+      return;
+    }
+    passModal.style.display = 'flex';
+    setTimeout(function () { passIn.focus(); }, 100);
+  };
+
+  document.getElementById('passClose').onclick = function () {
+    passModal.style.display = 'none';
+    passIn.value = '';
+    loginErr.style.display = 'none';
+  };
+
+  function unlock() {
+    if (passIn.value === PASS) {
+      unlocked = true;
+      passModal.style.display = 'none';
+      launcher.style.display = 'none';
+      cluster.style.display = 'flex';
+      passIn.value = '';
+      loginErr.style.display = 'none';
+      if (!engineOn) {
+        engineOn = true;
+        tick();
+        setInterval(tick, 250);
+      }
+    } else {
+      loginErr.style.display = 'block';
+      passIn.value = '';
+      passIn.focus();
+    }
+  }
+  document.getElementById('unlockBtn').onclick = unlock;
+  passIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') unlock(); });
+
+  /* drag */
+  var handle = document.getElementById('dragHandle');
+  var dragging = false, sx, sy, ol, ot;
+  function ds(e) {
+    dragging = true;
+    var p = e.touches ? e.touches[0] : e;
+    sx = p.clientX; sy = p.clientY;
+    var r = cluster.getBoundingClientRect();
+    ol = r.left; ot = r.top;
+    if (e.cancelable) e.preventDefault();
+  }
+  function dm(e) {
+    if (!dragging) return;
+    var p = e.touches ? e.touches[0] : e;
+    cluster.style.left = (ol + p.clientX - sx) + 'px';
+    cluster.style.top = (ot + p.clientY - sy) + 'px';
+    cluster.style.right = 'auto';
+    if (e.cancelable) e.preventDefault();
+  }
+  function de() { dragging = false; }
+  handle.addEventListener('mousedown', ds);
+  handle.addEventListener('touchstart', ds, { passive: false });
+  document.addEventListener('mousemove', dm);
+  document.addEventListener('touchmove', dm, { passive: false });
+  document.addEventListener('mouseup', de);
+  document.addEventListener('touchend', de);
+
+  document.getElementById('closeBtn').onclick = function () {
+    cluster.style.display = 'none';
+    launcher.style.display = 'flex';
+  };
+  document.getElementById('nextBtn').onclick = function () { apply(getInfo(), true); };
+
+  function hash(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+  function getInfo() {
+    var now = new Date();
+    var y = now.getUTCFullYear();
+    var m = String(now.getUTCMonth() + 1).padStart(2, '0');
+    var d = String(now.getUTCDate()).padStart(2, '0');
+    var total = now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds();
+    var idx = Math.floor(total / 30) + 1;
+    var left = 30 - (total % 30);
+    if (left === 0) left = 30;
+    return {
+      id: '' + y + m + d + '1000' + String(idx).padStart(4, '0'),
+      short: String(idx).padStart(4, '0'),
+      left: left
+    };
+  }
+  function predict(id) {
+    var h = hash('BG_SIAM' + id);
+    var num = h % 10;
+    return { num: num, size: num >= 5 ? 'BIG' : 'SMALL', sync: 90 + (h % 10), ping: 10 + (h % 20) };
+  }
+
+  var last = '';
+  function apply(info, force) {
+    if (!force && info.id === last) return;
+    last = info.id;
+    var r = predict(info.id);
+    document.getElementById('ballNum').textContent = r.num;
+    document.getElementById('periodVal').textContent = info.short;
+    document.getElementById('modeSide').textContent = r.size;
+    document.getElementById('syncPct').textContent = r.sync + '%';
+    document.getElementById('syncFill').style.width = r.sync + '%';
+    document.getElementById('pingVal').textContent = r.ping + 'MS';
+    document.getElementById('sysVal').textContent = 'LOCKED';
+    document.getElementById('lockTxt').textContent = '▣ SIGNAL LOCKED';
+    var b = document.getElementById('sigBadge');
+    b.textContent = r.size;
+    b.className = 'badge ' + r.size;
+  }
+  function tick() {
+    var info = getInfo();
+    document.getElementById('timerVal').textContent = info.left;
+    var b = document.getElementById('sigBadge');
+    if (info.left <= 5) {
+      b.textContent = 'WAIT';
+      b.className = 'badge WAIT';
+      document.getElementById('lockTxt').textContent = '▣ SCANNING...';
+    }
+    if (info.id !== last) apply(info, false);
+  }
+})();
+</script>
+</body>
+</html>
